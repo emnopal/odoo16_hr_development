@@ -29,7 +29,7 @@ class TimeOffCustom(models.Model):
         ])
 
         if constrains_condition:
-            raise UserError(f"{self.user_id.name} day off is more than 1 day, please ask {self.user_id.name} to upload a document to prove!")
+            raise UserError(f"{self.user_id.name} day off is more than or equal {self.max_date_to_upload} days, please ask {self.user_id.name} to upload a document to prove!")
 
     def action_confirm(self):
         self._constraint_attachment()
