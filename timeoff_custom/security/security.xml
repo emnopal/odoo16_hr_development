@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="hr_employee_permanent_employee" model="res.groups">
+        <field name="name">Permanent Employee</field>
+    </record>
+
+    <record id="resource_all_can_see" model="ir.rule">
+        <field name="name">Time Off Resource Which All Can See</field>
+        <field name="model_id" ref="model_hr_leave_type"/>
+        <field name="domain_force">[('need_to_permanent_employee','!=',True)]</field>
+        <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+        <field name="perm_write" eval="0"/>
+        <field name="perm_read" eval="1"/>
+        <field name="perm_create" eval="0"/>
+        <field name="perm_unlink" eval="0"/>
+    </record>
+
+    <record id="resource_only_permanent_employee_can_see" model="ir.rule">
+        <field name="name">Time Off Resource Which Only Permanent Employee Can See</field>
+        <field name="model_id" ref="model_hr_leave_type"/>
+        <field name="perm_write" eval="1"/>
+        <field name="perm_read" eval="1"/>
+        <field name="perm_create" eval="1"/>
+        <field name="perm_unlink" eval="1"/>
+        <field name="domain_force">[(1,'=',1)]</field>
+        <field name="groups" eval="[(4, ref('timeoff_custom.hr_employee_permanent_employee'))]"/>
+    </record>
+
+</odoo>

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="res_config_settings_view_form" model="ir.ui.view">
+            <field name="name">res.config.settings.view.form.inherit.hr.holidays</field>
+            <field name="model">res.config.settings</field>
+            <field name="priority" eval="90"/>
+            <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//div[hasclass('settings')]" position="inside">
+                    <div class="app_settings_block" data-string="Time Off" id="timeoff" string="Time Off" data-key="hr_holidays" groups="hr_holidays.group_hr_holidays_manager">
+                        <h2>Time Off Management</h2>
+                        <div class="row mt16 o_settings_container" id="hr_holidays_setting">
+                            <div class="col-12 col-lg-6 o_setting_box">
+
+                                <div class="o_setting_left_pane">
+                                    <field name="can_select_past_day_as_time_off"/>
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <label for="can_select_past_day_as_time_off"/>
+                                    <div class="text-muted">
+                                        User Can Select Past Day as Time Off
+                                    </div>
+                                </div>
+                                <br/>
+
+                                <div class="o_setting_left_pane">
+                                    <field name="cannot_select_future_day_as_time_off"/>
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <label for="cannot_select_future_day_as_time_off"/>
+                                    <div class="text-muted">
+                                        User Cannot Select Future Day as Time Off
+                                    </div>
+                                </div>
+                                <br/>
+
+                                <div class="o_setting_left_pane" groups="base.group_no_one">
+                                    <field name="can_delete_past_time_off" groups="base.group_no_one"/>
+                                </div>
+                                <div class="o_setting_right_pane" groups="base.group_no_one">
+                                    <label for="can_delete_past_time_off" groups="base.group_no_one"/>
+                                    <div class="text-muted" groups="base.group_no_one">
+                                        User Can Delete Past Time Off (Applied only for Admin, useful for debugging)
+                                    </div>
+                                </div>
+                                <br/>
+
+                                <div class="o_setting_left_pane" groups="base.group_no_one">
+                                    <field name="can_delete_validated_time_off" groups="base.group_no_one"/>
+                                </div>
+                                <div class="o_setting_right_pane" groups="base.group_no_one">
+                                    <label for="can_delete_validated_time_off" groups="base.group_no_one"/>
+                                    <div class="text-muted">
+                                        User Can Delete Validated Time Off (Applied only for Admin, useful for debugging)
+                                    </div>
+                                </div>
+                                <br/>
+
+                                <div class="o_setting_left_pane" groups="base.group_no_one">
+                                    <field name="can_delete_validated_allocation" groups="base.group_no_one"/>
+                                </div>
+                                <div class="o_setting_right_pane" groups="base.group_no_one">
+                                    <label for="can_delete_validated_allocation" groups="base.group_no_one"/>
+                                    <div class="text-muted" groups="base.group_no_one">
+                                        User Can Delete Validated Time Off (Applied only for Admin, useful for debugging)
+                                    </div>
+                                </div>
+                                <br/>
+
+                            </div>
+                        </div>
+                    </div>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="hr_holidays_config_settings_action" model="ir.actions.act_window">
+            <field name="name">Settings</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">res.config.settings</field>
+            <field name="view_mode">form</field>
+            <field name="target">inline</field>
+            <field name="context">{'module' : 'hr_holidays', 'bin_size': False}</field>
+        </record>
+
+        <menuitem id="hr_holidays_config_settings_menu" name="Settings"
+            parent="hr_holidays.menu_hr_holidays_configuration" sequence="0" action="hr_holidays_config_settings_action"
+            groups="base.group_system"/>
+    </data>
+</odoo>
