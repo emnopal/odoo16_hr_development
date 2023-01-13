@@ -15,6 +15,7 @@
         'security/security.xml',
         'report/hr_leave_report_view.xml',
         'views/hr_leave_views.xml',
+        'views/hr_leave_allocation_views.xml',
         'views/hr_leave_type_views.xml',
         'views/hr_employee.xml',
         'views/hr_employee_public.xml',

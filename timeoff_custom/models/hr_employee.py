@@ -1,5 +1,5 @@
-from odoo import fields, models, api
-
+from odoo import fields, models, api, _
+from odoo.exceptions import UserError, ValidationError
 
 class HrEmployee(models.Model):
     """Inherit HR Employee"""
@@ -12,16 +12,19 @@ class HrEmployee(models.Model):
         ], string="Employee Status", default='contract')
 
     def write(self, values):
-        permanent_employee_group = self.env.ref('timeoff_custom.hr_employee_permanent_employee')
-        if values.get('employee_status') == 'permanent':
-            permanent_employee_group.write({
-                    'users': [(4, self.user_id.id)]
-            })
-        else:
-            permanent_employee_group.write({
-                'users': [(3, self.user_id.id)]
-            })
-        return super(HrEmployee, self).write(values)
+        try:
+            permanent_employee_group = self.env.ref('timeoff_custom.hr_employee_permanent_employee')
+            if values.get('employee_status') == 'permanent':
+                permanent_employee_group.write({
+                        'users': [(4, self.user_id.id)]
+                })
+            else:
+                permanent_employee_group.write({
+                    'users': [(3, self.user_id.id)]
+                })
+            return super(HrEmployee, self).write(values)
+        except Exception as ex:
+            raise ValidationError(_("This employee doesn't have user, please assign or create one!"))
 
 
 class HrEmployeePublic(models.Model):

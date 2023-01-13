@@ -7,8 +7,6 @@ class HrLeaveReportBalance(models.Model):
     name = fields.Char(string="Employee Name", readonly=True)
     annual_leave = fields.Float(string="Annual Leave", readonly=True)
     replacement_day_off = fields.Float(string="Replacement Day Off", readonly=True)
-    sick = fields.Float(string="Sick", readonly=True)
-    unpaid_leave = fields.Float(string="Unpaid Leave", readonly=True)
 
     def init(self):
         tools.drop_view_if_exists(self._cr, 'hr_leave_report_balance')
@@ -19,9 +17,7 @@ class HrLeaveReportBalance(models.Model):
                     row_number() OVER () as id,
                     balance.name,
                     sum(case when balance.day_off_type ~* '(?<!\w)(?:annual)(?!\w)' then balance.balance_days end) as annual_leave,
-                    sum(case when balance.day_off_type ~* '(?<!\w)(?:replacement)(?!\w)' then balance.balance_days end) as replacement_day_off,
-                    sum(case when balance.day_off_type ~* '(?<!\w)(?:sick)(?!\w)' then balance.balance_days end) as sick,
-                    sum(case when balance.day_off_type ~* '(?<!\w)(?:unpaid)(?!\w)' then balance.balance_days end) as unpaid_leave
+                    sum(case when balance.day_off_type ~* '(?<!\w)(?:replacement)(?!\w)' then balance.balance_days end) as replacement_day_off
                 from (
                     select
                         e.name,

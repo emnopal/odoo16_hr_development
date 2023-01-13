@@ -25,12 +25,34 @@
                                 <br/>
 
                                 <div class="o_setting_left_pane">
+                                    <field name="can_select_past_day_as_sick_time_off"/>
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <label for="can_select_past_day_as_sick_time_off"/>
+                                    <div class="text-muted">
+                                        User Can Select Past Day as Sick Time Off (Only for sick)
+                                    </div>
+                                </div>
+                                <br/>
+
+                                <div class="o_setting_left_pane">
                                     <field name="cannot_select_future_day_as_time_off"/>
                                 </div>
                                 <div class="o_setting_right_pane">
                                     <label for="cannot_select_future_day_as_time_off"/>
                                     <div class="text-muted">
                                         User Cannot Select Future Day as Time Off
+                                    </div>
+                                </div>
+                                <br/>
+
+                                <div class="o_setting_left_pane">
+                                    <field name="cannot_select_future_day_as_sick_time_off"/>
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <label for="cannot_select_future_day_as_sick_time_off"/>
+                                    <div class="text-muted">
+                                        User Cannot Select Future Day as Sick Time Off (Only for sick)
                                     </div>
                                 </div>
                                 <br/>

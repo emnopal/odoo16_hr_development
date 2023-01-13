@@ -7,13 +7,16 @@
         <field name="inherit_id" ref="hr_holidays.hr_leave_view_form"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='holiday_type']" position="after">
-                <field name="button_can_approve_or_reject" invisible="1" readonly="1"></field>
+                <field name="current_user" invisible="1" readonly="1"></field>
+            </xpath>
+            <xpath expr="//button[@name='action_validate']" position="attributes">
+                <attribute name="attrs">{'invisible': ['|', ('state', '!=', 'validate1'), ('current_user', '=', True)]}</attribute>
             </xpath>
             <xpath expr="//button[@name='action_approve']" position="attributes">
-                <attribute name="attrs">{'invisible': ['|', ('state', '!=', 'confirm'), ('button_can_approve_or_reject', '!=', True)]}</attribute>
+                <attribute name="attrs">{'invisible': ['|', '|', '|', ('state', '!=', 'confirm'), ('current_user', '=', True), ('active', '=', False), ('can_approve', '=', False)]}</attribute>
             </xpath>
             <xpath expr="//button[@name='action_refuse']" position="attributes">
-                <attribute name="attrs">{'invisible': ['|', ('state', '!=', 'confirm'), ('button_can_approve_or_reject', '!=', True)]}</attribute>
+                <attribute name="attrs">{'invisible': ['|', '|', '|', ('state', 'not in', ('confirm','validate1','validate')), ('current_user', '=', True), ('active', '=', False), ('can_approve', '=', False)]}</attribute>
             </xpath>
         </field>
     </record>

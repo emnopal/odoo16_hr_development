@@ -23,8 +23,6 @@
                 <field name="name"/>
                 <field name="annual_leave"/>
                 <field name="replacement_day_off"/>
-                <field name="sick"/>
-                <field name="unpaid_leave"/>
             </tree>
         </field>
     </record>
