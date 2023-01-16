@@ -2,10 +2,10 @@
 create or replace view hr_used_day_off as (
 	select
 		used.name,
-		sum(case when used.day_off_type ~* '(?<!\w)(?:annual)(?!\w)' then used.used_days end) as annual_leave,
-		sum(case when used.day_off_type ~* '(?<!\w)(?:replacement)(?!\w)' then used.used_days end) as replacement_day_off,
-		sum(case when used.day_off_type ~* '(?<!\w)(?:sick)(?!\w)' then used.used_days end) as sick,
-		sum(case when used.day_off_type ~* '(?<!\w)(?:unpaid)(?!\w)' then used.used_days end) as unpaid_leave
+		sum(case when used.day_off_type ~* '(?<!\w)(?:annual)(?!\w)' then used.used_days end)::integer as annual_leave,
+		sum(case when used.day_off_type ~* '(?<!\w)(?:replacement)(?!\w)' then used.used_days end)::integer as replacement_day_off,
+		sum(case when used.day_off_type ~* '(?<!\w)(?:sick)(?!\w)' then used.used_days end)::integer as sick,
+		sum(case when used.day_off_type ~* '(?<!\w)(?:unpaid)(?!\w)' then used.used_days end)::integer as unpaid_leave
 	from (
 	select
 		e.name,
@@ -27,10 +27,10 @@ select * from hr_used_day_off;
 create or replace view hr_balance_day_off as (
 	select
 		balance.name,
-		sum(case when balance.day_off_type ~* '(?<!\w)(?:annual)(?!\w)' then balance.balance_days end) as annual_leave,
-		sum(case when balance.day_off_type ~* '(?<!\w)(?:replacement)(?!\w)' then balance.balance_days end) as replacement_day_off,
-		sum(case when balance.day_off_type ~* '(?<!\w)(?:sick)(?!\w)' then balance.balance_days end) as sick,
-		sum(case when balance.day_off_type ~* '(?<!\w)(?:unpaid)(?!\w)' then balance.balance_days end) as unpaid_leave
+		sum(case when balance.day_off_type ~* '(?<!\w)(?:annual)(?!\w)' then balance.balance_days end)::integer as annual_leave,
+		sum(case when balance.day_off_type ~* '(?<!\w)(?:replacement)(?!\w)' then balance.balance_days end)::integer as replacement_day_off,
+		sum(case when balance.day_off_type ~* '(?<!\w)(?:sick)(?!\w)' then balance.balance_days end)::integer as sick,
+		sum(case when balance.day_off_type ~* '(?<!\w)(?:unpaid)(?!\w)' then balance.balance_days end)::integer as unpaid_leave
 	from (
 		select
 			e.name,
