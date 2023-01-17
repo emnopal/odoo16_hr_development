@@ -53,26 +53,18 @@ class TimeOffCustom(models.Model):
 
     @api.constrains('request_date_from', 'request_date_to')
     def _depends_datepicker(self):
-        cannot_future_day = self.env["ir.config_parameter"].sudo().get_param("hr_holidays.cannot_select_future_day_as_time_off")
-        cannot_future_day_sick = self.env["ir.config_parameter"].sudo().get_param("hr_holidays.cannot_select_future_day_as_sick_time_off")
-
-        if cannot_future_day:
-            if any([self.request_date_from > fields.Date.today(), self.request_date_to > fields.Date.today()]):
-                raise UserError(_(f"Based on this company rules, selecting request date in the future is forbidden"))
-
-        if cannot_future_day_sick and self.holiday_status_name == 'Sick':
+        if self.holiday_status_name == 'Sick':
             if any([self.request_date_from > fields.Date.today(), self.request_date_to > fields.Date.today()]):
                 raise UserError(_(f"Based on this company rules, selecting request date in the future as sick day off is forbidden"))
 
     @api.constrains('state', 'number_of_days', 'holiday_status_id')
     def _check_holidays(self):
-        can_select_past_day = self.env["ir.config_parameter"].sudo().get_param("hr_holidays.can_select_past_day_as_time_off")
-        is_sick = self.env["ir.config_parameter"].sudo().get_param("hr_holidays.can_select_past_day_as_sick_time_off")
+        can_select_past_day = False
 
         for holiday in self:
             mapped_days = self.holiday_status_id.get_employees_days((holiday.employee_id | holiday.employee_ids).ids, holiday.date_from.date())
 
-            if is_sick and holiday.holiday_status_name == 'Sick':
+            if holiday.holiday_status_name == 'Sick':
                 can_select_past_day = True
 
             no_allocation_type = any([
@@ -116,30 +108,6 @@ class TimeOffCustom(models.Model):
                                         + _('\nThe employees that lack allocation days are:\n%s',
                                             (', '.join(unallocated_employees))))
 
-    @api.ondelete(at_uninstall=False)
-    def _unlink_if_correct_states(self):
-        error_message = _('You cannot delete a time off which is in %s state')
-        state_description_values = {elem[0]: elem[1] for elem in self._fields['state']._description_selection(self.env)}
-        now = fields.Datetime.now()
-        can_delete_validated = self.env["ir.config_parameter"].sudo().get_param("hr_holidays.can_delete_validated_time_off")
-        can_delete_past = self.env["ir.config_parameter"].sudo().get_param("hr_holidays.can_delete_past_time_off")
-
-        if not self.user_has_groups('hr_holidays.group_hr_holidays_user'):
-            for hol in self:
-                if hol.state not in ['draft', 'confirm']:
-                    raise UserError(error_message % state_description_values.get(self[:1].state))
-                if hol.date_from < now:
-                    raise UserError(_('You cannot delete a time off which is in the past'))
-                if hol.employee_ids and not hol.employee_id:
-                    raise UserError(_('You cannot delete a time off assigned to several employees'))
-        else:
-            if not can_delete_validated:
-                for holiday in self.filtered(lambda holiday: holiday.state not in ['draft', 'cancel', 'confirm']):
-                    raise UserError(error_message % (state_description_values.get(holiday.state),))
-            if not can_delete_past:
-                for holiday in self.filtered(lambda holiday: holiday.date_from < now):
-                    raise UserError(_('You cannot delete a time off which is in the past'))
-
 class TimeOffCustomAllocation(models.Model):
     _inherit = 'hr.leave.allocation'
 
@@ -172,14 +140,6 @@ class TimeOffCustomAllocation(models.Model):
         if self.current_user:
             raise UserError(_('You cannot validate for yourself'))
         return super(TimeOffCustomAllocation, self).action_validate()
-
-    @api.ondelete(at_uninstall=False)
-    def _unlink_if_correct_states(self):
-        can_delete_validated = self.env["ir.config_parameter"].sudo().get_param("hr_holidays.can_delete_validated_allocation")
-        state_description_values = {elem[0]: elem[1] for elem in self._fields['state']._description_selection(self.env)}
-        if not can_delete_validated:
-            for holiday in self.filtered(lambda holiday: holiday.state not in ['draft', 'cancel', 'confirm']):
-                raise UserError(_('You cannot delete an allocation request which is in %s state.') % (state_description_values.get(holiday.state),))
 
 class TimeOffCustomType(models.Model):
     _inherit = 'hr.leave.type'

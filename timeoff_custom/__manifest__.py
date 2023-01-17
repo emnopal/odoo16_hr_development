@@ -19,7 +19,6 @@
         'views/hr_leave_type_views.xml',
         'views/hr_employee.xml',
         'views/hr_employee_public.xml',
-        'views/res_config_settings_views.xml',
     ],
     "demo": [],
     "qweb": [],
