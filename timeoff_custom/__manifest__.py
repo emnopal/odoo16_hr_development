@@ -13,7 +13,10 @@
     "data": [
         "security/ir.model.access.csv",
         'security/security.xml',
+        'data/mail_templates.xml',
         'report/hr_leave_report_view.xml',
+        'wizard/hr_leave_refuse_leave_view.xml',
+        'wizard/hr_leave_refuse_allocation_view.xml',
         'views/hr_leave_views.xml',
         'views/hr_leave_allocation_views.xml',
         'views/hr_leave_type_views.xml',
