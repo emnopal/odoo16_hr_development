@@ -12,8 +12,8 @@
             <xpath expr="//button[@name='action_validate']" position="attributes">
                 <attribute name="attrs">{'invisible': ['|', '|', ('current_user', '=', True), ('state', 'not in', ('confirm','validate'))]}</attribute>
             </xpath>
-            <xpath expr="//button[@name='action_refuse']" position="attributes">
-                <attribute name="attrs">{'invisible': ['|', '|', ('can_approve', '=', False), ('state', 'not in', ('confirm','validate')), ('current_user', '=', True)]}</attribute>
+            <xpath expr="//button[@name='action_refuse']" position="replace">
+                <button string="Refuse" name="%(hr_leave_refuse_allocation_wizard_action)d" type="action" attrs="{'invisible': ['|', '|', ('can_approve', '=', False), ('state', 'not in', ('confirm','validate')), ('current_user', '=', True)]}"/>
             </xpath>
         </field>
     </record>

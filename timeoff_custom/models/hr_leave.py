@@ -1,6 +1,7 @@
 from odoo import api, models, fields, _
 from odoo.exceptions import UserError, ValidationError
 from odoo.tools import float_compare
+from datetime import datetime
 
 class TimeOffCustom(models.Model):
     _inherit = "hr.leave"
@@ -15,9 +16,8 @@ class TimeOffCustom(models.Model):
         for rec in self:
             rec.current_user = (True if rec.env.user.id == rec.user_id.id and not rec.env.user.has_group('base.group_system') else False)
 
-    @api.depends('supported_attachment_ids_count', 'leave_type_support_document', 'number_of_days')
+    @api.depends('supported_attachment_ids', 'attachment_ids', 'supported_attachment_ids_count', 'leave_type_support_document', 'number_of_days')
     def _constraint_attachment(self):
-
         constrains_condition = all([
             self.number_of_days >= self.max_date_to_upload,
             self.state not in ['draft', 'cancel', 'refuse'],
@@ -27,8 +27,9 @@ class TimeOffCustom(models.Model):
         ])
 
         if constrains_condition:
-            raise UserError(_(f"{self.user_id.name} day off is more than or equal"
-                            f"{self.max_date_to_upload} days, please ask {self.user_id.name} to upload a document to prove!"))
+            raise UserError(_(f"{self.user_id.name} day's off is more than or equal "
+                            f"{self.max_date_to_upload} days, please ask {self.user_id.name} "
+                            "to upload a document to prove!"))
 
     def action_confirm(self):
         self._constraint_attachment()
@@ -46,10 +47,35 @@ class TimeOffCustom(models.Model):
             raise UserError(_('You cannot validate for yourself'))
         return super(TimeOffCustom, self).action_validate()
 
-    def action_refuse(self):
+    def action_refuse(self, reason):
         if self.current_user:
             raise UserError(_('You cannot refuse for yourself'))
-        return super(TimeOffCustom, self).action_refuse()
+
+        current_employee = self.env.user.employee_id
+        if any(holiday.state not in ['draft', 'confirm', 'validate', 'validate1'] for holiday in self):
+            raise UserError(_('Time off request must be confirmed or validated in order to refuse it.'))
+
+        validated_holidays = self.filtered(lambda hol: hol.state == 'validate1')
+        validated_holidays.write({'state': 'refuse', 'first_approver_id': current_employee.id})
+        (self - validated_holidays).write({'state': 'refuse', 'second_approver_id': current_employee.id})
+        # Delete the meeting
+        self.mapped('meeting_id').write({'active': False})
+        # If a category that created several holidays, cancel all related
+        linked_requests = self.mapped('linked_request_ids')
+        if linked_requests:
+            linked_requests.action_refuse(reason)
+
+        # Post a second message, more verbose than the tracking message
+        for holiday in self:
+            if holiday.employee_id.user_id:
+                holiday.message_post_with_view('timeoff_custom.hr_leave_template_refuse_reason', values={
+                    'reason': reason,
+                    'leave_type': holiday.holiday_status_id.display_name,
+                    'date': holiday.date_from.date()
+                })
+
+        self.activity_update()
+        return True
 
     @api.constrains('request_date_from', 'request_date_to')
     def _depends_datepicker(self):
@@ -131,10 +157,28 @@ class TimeOffCustomAllocation(models.Model):
             raise UserError(_("You're not eligible to take annual leave"))
         return super(TimeOffCustomAllocation, self).action_confirm()
 
-    def action_refuse(self):
+    def action_refuse(self, reason):
         if self.current_user:
             raise UserError(_('You cannot refuse for yourself'))
-        return super(TimeOffCustomAllocation, self).action_refuse()
+        current_employee = self.env.user.employee_id
+        if any(holiday.state not in ['confirm', 'validate', 'validate1'] for holiday in self):
+            raise UserError(_('Allocation request must be confirmed or validated in order to refuse it.'))
+
+        self.write({'state': 'refuse', 'approver_id': current_employee.id})
+        # If a category that created several holidays, cancel all related
+        linked_requests = self.mapped('linked_request_ids')
+        if linked_requests:
+            linked_requests.action_refuse(reason)
+
+        for holiday in self:
+            if holiday.employee_id.user_id:
+                holiday.message_post_with_view('timeoff_custom.hr_allocation_template_refuse_reason', values={
+                    'reason': reason,
+                    'leave_type': holiday.holiday_status_id.display_name
+                })
+
+        self.activity_update()
+        return True
 
     def action_validate(self):
         if self.current_user:
