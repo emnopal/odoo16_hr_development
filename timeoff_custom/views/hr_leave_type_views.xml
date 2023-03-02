@@ -7,9 +7,11 @@
         <field name="inherit_id" ref="hr_holidays.edit_holiday_status_form"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='support_document']" position="after">
-                <field name="need_to_permanent_employee"/>
-                <field name="must_upload_attachment"/>
+                <field name="must_upload_attachment" attrs="{'invisible':[('support_document', '!=', True)]}"/>
                 <field name="max_date_to_upload" attrs="{'invisible':[('must_upload_attachment', '!=', True)]}"/>
+                <field name="need_eligible_employee"/>
+                <field name="only_admin_can_allocate"/>
+                <field name="can_select_past"/>
             </xpath>
         </field>
     </record>

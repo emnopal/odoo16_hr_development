@@ -3,49 +3,69 @@ from odoo.exceptions import UserError, ValidationError
 from odoo.tools import float_compare
 from datetime import datetime
 
-class TimeOffCustom(models.Model):
+
+class HrLeave(models.Model):
     _inherit = "hr.leave"
 
     holiday_status_name = fields.Char(related='holiday_status_id.name')
     must_upload_attachment = fields.Boolean(related='holiday_status_id.must_upload_attachment')
     max_date_to_upload = fields.Integer(related='holiday_status_id.max_date_to_upload')
+    can_select_past = fields.Boolean(related='holiday_status_id.can_select_past')
     current_user = fields.Boolean(string="Is Current User?", compute='_get_current_user')
+    is_hr = fields.Boolean(related='employee_id.is_hr')
+    is_manager = fields.Boolean(related='employee_id.is_manager')
+    state = fields.Selection(selection_add=[('cancel', 'Cancelled')])
 
     @api.depends('user_id')
     def _get_current_user(self):
         for rec in self:
             rec.current_user = (True if rec.env.user.id == rec.user_id.id and not rec.env.user.has_group('base.group_system') else False)
 
+    # check if user have submitted attachment; attachment validation in user view
+    @api.model_create_multi
+    def create(self, vals_list):
+        for value in vals_list:
+            holiday_type = self.env['hr.leave.type'].search([('id', '=', value.get('holiday_status_id'))])
+            type_name = holiday_type.name
+            must_upload_attachment = holiday_type.must_upload_attachment
+            max_date_to_upload = holiday_type.max_date_to_upload
+            if must_upload_attachment:
+                date_to = datetime.strptime(value.get('request_date_to'), "%Y-%m-%d")
+                date_from = datetime.strptime(value.get('request_date_from'), "%Y-%m-%d")
+                off_duration = abs((date_to - date_from).days) + 1
+                if value.get('supported_attachment_ids'):
+                    attachment_count = len(value['supported_attachment_ids'][0][2])
+                    if attachment_count == 0 and off_duration >= max_date_to_upload:
+                        raise UserError(_(f'Your {type_name} is more than {max_date_to_upload} days, you have to upload a document to prove!'))
+        return super(HrLeave, self).create(vals_list)
+
+    # this is attachment validation in hr view
     @api.depends('supported_attachment_ids', 'attachment_ids', 'supported_attachment_ids_count', 'leave_type_support_document', 'number_of_days')
     def _constraint_attachment(self):
-        constrains_condition = all([
-            self.number_of_days >= self.max_date_to_upload,
-            self.state not in ['draft', 'cancel', 'refuse'],
-            self.supported_attachment_ids_count == 0,
-            self.leave_type_support_document,
-            self.must_upload_attachment,
-        ])
-
-        if constrains_condition:
+        if self.number_of_days >= self.max_date_to_upload and \
+        self.state not in ['cancel', 'refuse'] and \
+        self.supported_attachment_ids_count == 0 and \
+        self.leave_type_support_document and \
+        self.must_upload_attachment:
             raise UserError(_(f"{self.user_id.name} day's off is more than or equal "
                             f"{self.max_date_to_upload} days, please ask {self.user_id.name} "
                             "to upload a document to prove!"))
 
     def action_confirm(self):
         self._constraint_attachment()
-        return super(TimeOffCustom, self).action_confirm()
+        return super(HrLeave, self).action_confirm()
 
     def action_approve(self):
         self._constraint_attachment()
         if self.current_user:
             raise UserError(_('You cannot approve for yourself'))
-        return super(TimeOffCustom, self).action_approve()
+        return super(HrLeave, self).action_approve()
 
     def action_validate(self):
         self._constraint_attachment()
         if self.current_user:
             raise UserError(_('You cannot validate for yourself'))
-        return super(TimeOffCustom, self).action_validate()
+        return super(HrLeave, self).action_validate()
 
     def action_refuse(self, reason):
         if self.current_user:
@@ -77,21 +97,57 @@ class TimeOffCustom(models.Model):
         self.activity_update()
         return True
 
-    @api.constrains('request_date_from', 'request_date_to')
-    def _depends_datepicker(self):
-        if self.holiday_status_name == 'Sick':
-            if any([self.request_date_from > fields.Date.today(), self.request_date_to > fields.Date.today()]):
-                raise UserError(_(f"Based on this company rules, selecting request date in the future as sick day off is forbidden"))
+    def action_draft(self):
+        if any(holiday.state not in ['confirm', 'refuse', 'cancel'] for holiday in self):
+            raise UserError(_('Time off request state must be "Refused", "Cancelled" or "To Approve" in order to be reset to draft.'))
+        self.write({
+            'state': 'draft',
+            'first_approver_id': False,
+            'second_approver_id': False,
+        })
+        linked_requests = self.mapped('linked_request_ids')
+        if linked_requests:
+            linked_requests.action_draft()
+            linked_requests.unlink()
+        self.activity_update()
+        return True
+
+    def action_cancel(self):
+        if self.current_user:
+            raise UserError(_('You cannot cancel for yourself'))
+
+        current_employee = self.env.user.employee_id
+        if any(holiday.state not in ['confirm', 'validate', 'validate1'] for holiday in self):
+            raise UserError(_('Allocation request must be confirmed or validated in order to cancel it.'))
+
+        validated_holidays = self.filtered(lambda hol: hol.state == 'validate1')
+        validated_holidays.write({'state': 'cancel', 'first_approver_id': current_employee.id})
+        (self - validated_holidays).write({'state': 'cancel', 'second_approver_id': current_employee.id})
+        # Delete the meeting
+        self.mapped('meeting_id').write({'active': False})
+        # If a category that created several holidays, cancel all related
+        linked_requests = self.mapped('linked_request_ids')
+        if linked_requests:
+            linked_requests.action_cancel()
+
+        # Post a second message, more verbose than the tracking message
+        for holiday in self:
+            if holiday.employee_id.user_id:
+                holiday.message_post_with_view('timeoff_custom.hr_allocation_template_cancel', values={
+                    'reason': 'Time off cancelled by user',
+                    'leave_type': holiday.holiday_status_id.display_name,
+                    'date': holiday.date_from.date()
+                })
+
+        self.activity_update()
+        return True
 
     @api.constrains('state', 'number_of_days', 'holiday_status_id')
     def _check_holidays(self):
-        can_select_past_day = False
+        can_select_past_day = self.can_select_past
 
         for holiday in self:
             mapped_days = self.holiday_status_id.get_employees_days((holiday.employee_id | holiday.employee_ids).ids, holiday.date_from.date())
-
-            if holiday.holiday_status_name == 'Sick':
-                can_select_past_day = True
 
             no_allocation_type = any([
                 holiday.holiday_type != 'employee',
@@ -133,61 +189,3 @@ class TimeOffCustom(models.Model):
                                             'Please also check the time off waiting for validation.')
                                         + _('\nThe employees that lack allocation days are:\n%s',
                                             (', '.join(unallocated_employees))))
-
-class TimeOffCustomAllocation(models.Model):
-    _inherit = 'hr.leave.allocation'
-
-    holiday_status_name = fields.Char(compute='_computer_holiday_status_name')
-    employee_status = fields.Selection(related='employee_id.employee_status')
-    user_id = fields.Many2one(related='employee_id.user_id')
-    current_user = fields.Boolean(string="Is Current User?", compute='_get_current_user')
-
-    @api.depends('user_id')
-    def _get_current_user(self):
-        for rec in self:
-            rec.current_user = (True if rec.env.user.id == rec.user_id.id and not rec.env.user.has_group('base.group_system') else False)
-
-    @api.onchange('holiday_status_id')
-    def _computer_holiday_status_name(self):
-        for rec in self:
-            rec.holiday_status_name = rec.holiday_status_id.name
-
-    def action_confirm(self):
-        if self.holiday_status_name == 'Annual Leave' and self.employee_status != 'permanent':
-            raise UserError(_("You're not eligible to take annual leave"))
-        return super(TimeOffCustomAllocation, self).action_confirm()
-
-    def action_refuse(self, reason):
-        if self.current_user:
-            raise UserError(_('You cannot refuse for yourself'))
-        current_employee = self.env.user.employee_id
-        if any(holiday.state not in ['confirm', 'validate', 'validate1'] for holiday in self):
-            raise UserError(_('Allocation request must be confirmed or validated in order to refuse it.'))
-
-        self.write({'state': 'refuse', 'approver_id': current_employee.id})
-        # If a category that created several holidays, cancel all related
-        linked_requests = self.mapped('linked_request_ids')
-        if linked_requests:
-            linked_requests.action_refuse(reason)
-
-        for holiday in self:
-            if holiday.employee_id.user_id:
-                holiday.message_post_with_view('timeoff_custom.hr_allocation_template_refuse_reason', values={
-                    'reason': reason,
-                    'leave_type': holiday.holiday_status_id.display_name
-                })
-
-        self.activity_update()
-        return True
-
-    def action_validate(self):
-        if self.current_user:
-            raise UserError(_('You cannot validate for yourself'))
-        return super(TimeOffCustomAllocation, self).action_validate()
-
-class TimeOffCustomType(models.Model):
-    _inherit = 'hr.leave.type'
-
-    need_to_permanent_employee = fields.Boolean(string="Need Permanent Employee to allocate this time off", default=False)
-    must_upload_attachment = fields.Boolean(string="User Must Upload Attachment", default=False)
-    max_date_to_upload = fields.Integer(string="Maximum Day Off for User to Upload Attachment", default=0)

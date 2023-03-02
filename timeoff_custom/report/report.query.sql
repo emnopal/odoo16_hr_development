@@ -1,6 +1,7 @@
 -- used
 create or replace view hr_used_day_off as (
 	select
+		row_number() OVER () as id,
 		used.name,
 		sum(case when used.day_off_type ~* '(?<!\w)(?:annual)(?!\w)' then used.used_days end)::integer as annual_leave,
 		sum(case when used.day_off_type ~* '(?<!\w)(?:replacement)(?!\w)' then used.used_days end)::integer as replacement_day_off,
@@ -26,6 +27,7 @@ select * from hr_used_day_off;
 -- balance
 create or replace view hr_balance_day_off as (
 	select
+		row_number() OVER () as id,
 		balance.name,
 		sum(case when balance.day_off_type ~* '(?<!\w)(?:annual)(?!\w)' then balance.balance_days end)::integer as annual_leave,
 		sum(case when balance.day_off_type ~* '(?<!\w)(?:replacement)(?!\w)' then balance.balance_days end)::integer as replacement_day_off,

@@ -5,38 +5,38 @@ class HrEmployee(models.Model):
     """Inherit HR Employee"""
     _inherit = 'hr.employee'
 
-    employee_status = fields.Selection([
-        ('permanent', 'Permanent'),
-        ('contract', 'Contract'),
-        ('part', 'Part Time'),
-        ], string="Employee Status", default='contract')
+    employee_eligibility = fields.Boolean(string="Eligible Employee", default=False)
+    is_hr = fields.Boolean(compute='_compute_is_hr')
+    is_manager = fields.Boolean(compute='_compute_is_manager')
+
+    def _compute_is_hr(self):
+        for rec in self:
+            if rec.env.user.has_group('hr_holidays.group_hr_holidays_user'):
+                rec.is_hr = True
+            else:
+                rec.is_hr = False
+
+    def _compute_is_manager(self):
+        for rec in self:
+            if rec.env.user.has_group('hr_holidays.group_hr_holidays_manager'):
+                rec.is_manager = True
+            else:
+                rec.is_manager = False
 
     def write(self, values):
         try:
-            permanent_employee_group = self.env.ref('timeoff_custom.hr_employee_permanent_employee')
-            if values.get('employee_status') == 'permanent':
-                permanent_employee_group.write({
+            eligible_employee_group = self.env.ref('timeoff_custom.eligible_employee')
+            # it supposed to be use match case, but odoo 16 currently doesn't support python 3.10 or above
+            if values.get('employee_eligibility') == True:
+                eligible_employee_group.write({
                         'users': [(4, self.user_id.id)]
                 })
-            else:
-                permanent_employee_group.write({
+            elif values.get('employee_eligibility') == False:
+                eligible_employee_group.write({
                     'users': [(3, self.user_id.id)]
                 })
+            else:
+                pass
             return super(HrEmployee, self).write(values)
         except Exception as ex:
             raise ValidationError(_("This employee doesn't have user, please assign or create one!"))
-
-
-class HrEmployeePublic(models.Model):
-    """Inherit HR Employee"""
-    _inherit = 'hr.employee.public'
-
-    employee_status = fields.Selection([
-        ('permanent', 'Permanent'),
-        ('contract', 'Contract'),
-        ('part', 'Part Time'),
-        ], string="Employee Status", default='contract')
-
-    def search_read(self, domain=None, fields=None, offset=0, limit=None, order=None, **read_kwargs):
-        domain = [('user_id', '=', self._uid)] # '&', ('employee_id', '=', emp.employee_id),
-        return super(HrEmployeePublic, self).search_read(domain, fields, offset, limit, order, **read_kwargs)

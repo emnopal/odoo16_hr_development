@@ -8,7 +8,6 @@ class HrLeaveReportUsed(models.Model):
     annual_leave = fields.Integer(string="Annual Leave", readonly=True)
     replacement_day_off = fields.Integer(string="Replacement Day Off", readonly=True)
     sick = fields.Integer(string="Sick", readonly=True)
-    unpaid_leave = fields.Integer(string="Unpaid Leave", readonly=True)
 
     def init(self):
         tools.drop_view_if_exists(self._cr, 'hr_leave_report_used')
@@ -20,8 +19,7 @@ class HrLeaveReportUsed(models.Model):
                     used.name,
                     sum(case when used.day_off_type ~* '(?<!\w)(?:annual)(?!\w)' then used.used_days end)::integer as annual_leave,
                     sum(case when used.day_off_type ~* '(?<!\w)(?:replacement)(?!\w)' then used.used_days end)::integer as replacement_day_off,
-                    sum(case when used.day_off_type ~* '(?<!\w)(?:sick)(?!\w)' then used.used_days end)::integer as sick,
-                    sum(case when used.day_off_type ~* '(?<!\w)(?:unpaid)(?!\w)' then used.used_days end)::integer as unpaid_leave
+                    sum(case when used.day_off_type ~* '(?<!\w)(?:sick)(?!\w)' then used.used_days end)::integer as sick
                 from (
                 select
                     e.name,

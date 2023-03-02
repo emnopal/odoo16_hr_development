@@ -1,24 +1,188 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <record id="hr_leave_views_inherit_view_tree" model="ir.ui.view">
+        <field name="name">hr.leave.view.tree.custom</field>
+        <field name="model">hr.leave</field>
+        <field name="inherit_id" ref="hr_holidays.hr_leave_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//button[@name='action_approve']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//button[@name='action_validate']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//button[@name='action_refuse']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- force remove action button on tree view in "My Time Off" menu -->
+    <record id="hr_holidays.hr_leave_view_tree_my" model="ir.ui.view">
+        <field name="name">hr.holidays.view.tree</field>
+        <field name="model">hr.leave</field>
+        <field name="inherit_id" ref="hr_holidays.hr_leave_view_tree"/>
+        <field name="mode">primary</field>
+        <field name="priority">32</field>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='employee_id']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='department_id']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='holiday_type']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//button[@name='action_approve']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//button[@name='action_validate']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//button[@name='action_refuse']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="hr_leave_views_inherit_view_kanban" model="ir.ui.view">
+        <field name="name">hr.leave.view.kanban.custom</field>
+        <field name="model">hr.leave</field>
+        <field name="inherit_id" ref="hr_holidays.hr_leave_view_kanban"/>
+        <field name="arch" type="xml">
+            <xpath expr="//button[@name='action_approve']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//button[@name='action_validate']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//button[@name='action_refuse']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- is it not possible to inherit view form like this? so i need to rewrite it again -->
+    <record id="hr_holidays.hr_leave_view_form_manager" model="ir.ui.view">
+        <field name="name">hr.leave.view.form.manager</field>
+        <field name="model">hr.leave</field>
+        <field name="inherit_id" ref="hr_holidays.hr_leave_view_form"/>
+        <field name="mode">primary</field>
+        <field name="priority">16</field>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='title']" position="attributes">
+                <attribute name="invisible">0</attribute>
+            </xpath>
+            <xpath expr="//field[@name='holiday_status_id']" position="before">
+                <field name="holiday_type" string="Mode" groups="hr_holidays.group_hr_holidays_user" invisible="1"/>
+                <field name="mode_company_id" string="Company" groups="hr_holidays.group_hr_holidays_user" attrs="{
+                    'required': [('holiday_type', '=', 'company')],
+                    'invisible': [('holiday_type', '!=', 'company')],
+                    'readonly': [('state', 'not in', ('draft', 'confirm'))]
+                    }"/>
+                <field name="category_id" groups="hr_holidays.group_hr_holidays_user" attrs="{
+                    'required': [('holiday_type', '=', 'category')],
+                    'invisible': [('holiday_type', '!=','category')],
+                    'readonly': [('state', 'not in', ('draft', 'confirm'))]
+                    }"/>
+                <field name="department_id" groups="hr_holidays.group_hr_holidays_user" attrs="{
+                    'required': [('holiday_type', '=', 'department')],
+                    'invisible': [('holiday_type', '!=', 'department')],
+                    'readonly': [('state', 'not in', ('draft', 'confirm'))]
+                    }"/>
+                    <field name="multi_employee" invisible="1" force_save="1"/>
+                    <field name="employee_id" groups="hr_holidays.group_hr_holidays_user" attrs="{
+                        'invisible': ['|', '|', ('holiday_type', '!=', 'employee'), ('state', '!=', 'validate'), ('employee_id', '=', False)],
+                        'readonly': [('state', 'not in', ('draft', 'confirm'))]
+                        }" widget="many2one_avatar_employee"/>
+                    <field name="employee_ids" groups="hr_holidays.group_hr_holidays_user" attrs="{
+                        'required': [('holiday_type', '=', 'employee'), ('state', 'in', ('draft', 'cancel', 'refuse'))],
+                        'invisible': ['|', ('holiday_type', '!=', 'employee'), '&amp;', ('state', '=', 'validate'), ('employee_id', '!=', False)],
+                        'readonly': [('state', 'not in', ('draft', 'confirm'))]
+                        }" widget="many2many_avatar_employee" options="{'no_create': True}"/>
+            </xpath>
+            <field name="name" position="replace"/>
+            <field name="user_id" position="before">
+                <field name="name" widget="text" attrs="{'readonly': [('state', 'not in', ('draft', 'confirm'))]}"/>
+            </field>
+            <xpath expr="//div[hasclass('col_left')]" position="after">
+                <div class="o_hr_leave_column col_right col-md-6 col-12">
+                    <widget name="hr_leave_stats"/>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
     <record id="hr_leave_views_inherit_view_form" model="ir.ui.view">
         <field name="name">hr.leave.view.form.custom</field>
         <field name="model">hr.leave</field>
         <field name="inherit_id" ref="hr_holidays.hr_leave_view_form"/>
         <field name="arch" type="xml">
+            <xpath expr="//field[@name='employee_ids']" position="attributes">
+                <attribute name="options">{'no_create': True}</attribute>
+            </xpath>
             <xpath expr="//field[@name='holiday_type']" position="after">
                 <field name="current_user" invisible="1" readonly="1"></field>
-            </xpath>
-            <xpath expr="//button[@name='action_validate']" position="attributes">
-                <attribute name="attrs">{'invisible': ['|', ('state', '!=', 'validate1'), ('current_user', '=', True)]}</attribute>
+                <field name="is_hr" invisible="1" readonly="1"></field>
+                <field name="is_manager" invisible="1" readonly="1"></field>
             </xpath>
             <xpath expr="//button[@name='action_approve']" position="attributes">
+                <attribute name="string">Approve</attribute>
                 <attribute name="attrs">{'invisible': ['|', '|', '|', ('state', '!=', 'confirm'), ('current_user', '=', True), ('active', '=', False), ('can_approve', '=', False)]}</attribute>
             </xpath>
-            <xpath expr="//button[@name='action_refuse']" position="replace">
-                <button string="Refuse" name="%(hr_leave_refuse_leave_wizard_action)d" type="action" attrs="{'invisible': ['|', '|', '|', ('state', 'not in', ('confirm','validate1','validate')), ('current_user', '=', True), ('active', '=', False), ('can_approve', '=', False)]}"/>
+            <xpath expr="//button[@name='action_confirm']" position="attributes">
+                <attribute name="string">Submit</attribute>
             </xpath>
+            <xpath expr="//button[@name='action_validate']" position="attributes">
+                <attribute name="string">Confirm</attribute>
+                <attribute name="attrs">{'invisible': ['|', ('state', '!=', 'validate1'), ('current_user', '=', True)]}</attribute>
+            </xpath>
+            <xpath expr="//button[@name='action_refuse']" position="replace">
+                <button string="Refuse" name="%(hr_leave_refuse_leave_wizard_action)d" type="action" attrs="{'invisible': ['|', '|', '|', ('state', 'not in', ('confirm')), ('current_user', '=', True), ('active', '=', False), ('can_approve', '=', False)]}"/>
+            </xpath>
+            <xpath expr="//button[@name='action_cancel']" position="replace">
+                <button string="Cancel" name="action_cancel" type="object" attrs="{'invisible': ['|', '|', '|', ('state', 'not in', ('confirm', 'validate', 'validate1')), ('can_approve', '=', False), ('current_user', '=', True), ('active', '=', False)]}"/>
+            </xpath>
+            <xpath expr="//button[@name='action_draft']" position="attributes">
+                <attribute name="attrs">{'invisible': [('state', 'not in', ['cancel', 'confirm'])]}</attribute>
+            </xpath>
+            <xpath expr="//field[@name='message_follower_ids']" position="replace"/>
+            <xpath expr="//field[@name='activity_ids']" position="replace"/>
         </field>
+    </record>
+
+    <record id="hr_holidays.hr_leave_action_action_approve_department" model="ir.actions.act_window">
+        <field name="context">{}</field>
+    </record>
+
+    <record model="ir.ui.menu" id="hr_holidays.menu_hr_holidays_configuration">
+        <field name="groups_id" eval="[(6,0,[ref('hr_holidays.group_hr_holidays_manager')])]"/>
+    </record>
+
+    <record model="ir.ui.menu" id="hr_holidays.hr_holidays_status_menu_configuration">
+        <field name="groups_id" eval="[(6,0,[ref('hr_holidays.group_hr_holidays_manager')])]"/>
+    </record>
+
+    <record model="ir.ui.menu" id="hr_holidays.hr_holidays_accrual_menu_configuration">
+        <field name="groups_id" eval="[(6,0,[ref('hr_holidays.group_hr_holidays_manager')])]"/>
+    </record>
+
+    <record model="ir.ui.menu" id="hr_holidays.hr_holidays_public_time_off_menu_configuration">
+        <field name="groups_id" eval="[(6,0,[ref('hr_holidays.group_hr_holidays_manager')])]"/>
+    </record>
+
+    <record model="ir.ui.menu" id="hr_holidays.hr_holidays_stress_day_menu_configuration">
+        <field name="groups_id" eval="[(6,0,[ref('hr_holidays.group_hr_holidays_manager')])]"/>
+    </record>
+
+    <record model="ir.ui.menu" id="hr_holidays.menu_hr_available_holidays_report_tree">
+        <field name="name">Graph</field>
+    </record>
+
+    <record model="ir.ui.menu" id="hr_holidays.menu_hr_holidays_summary_all">
+        <field name="name">Summary</field>
     </record>
 
 </odoo>

@@ -1,4 +1,5 @@
 from odoo import fields, models, _, api
+from odoo.exceptions import UserError
 
 
 class HrLeaveRefuseAllocationWizard(models.TransientModel):
@@ -13,15 +14,4 @@ class HrLeaveRefuseAllocationWizard(models.TransientModel):
     reason = fields.Text(required=True)
 
     def action_refuse_allocation(self):
-        self.ensure_one()
         self.allocation_id.action_refuse(self.reason)
-
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'type': 'success',
-                'message': _("Your allocation has been refused."),
-                'next': {'type': 'ir.actions.act_window_close'},
-            }
-        }

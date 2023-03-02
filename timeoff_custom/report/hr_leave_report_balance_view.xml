@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<odoo>
+
+    <record id="hr_leave_report_balance_tree" model="ir.ui.view">
+        <field name="name">hr.leave.report.balance.tree</field>
+        <field name="model">hr.leave.report.balance</field>
+        <field name="arch" type="xml">
+            <tree create="0" edit="0" delete="0">
+                <field name="name"/>
+                <field name="annual_leave"/>
+                <field name="replacement_day_off"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_hr_leave_report_balance_tree" model="ir.actions.act_window">
+        <field name="name">Total Balanced</field>
+        <field name="res_model">hr.leave.report.balance</field>
+        <field name="view_mode">tree</field>
+    </record>
+
+    <menuitem
+        id="hr_leave_report_balance_menu"
+        action="action_hr_leave_report_balance_tree"
+        parent="hr_holidays.menu_hr_holidays_report"/>
+
+</odoo>

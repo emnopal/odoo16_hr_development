@@ -7,7 +7,7 @@
         <field name="inherit_id" ref="hr.view_employee_form"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='employee_type']" position="after">
-                <field name="employee_status" force_save="1" attrs="{'invisible': [('employee_type', '!=', 'employee')]}"/>
+                <field name="employee_eligibility" force_save="1"/>
             </xpath>
         </field>
     </record>
