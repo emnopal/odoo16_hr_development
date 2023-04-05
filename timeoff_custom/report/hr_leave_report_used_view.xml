@@ -6,7 +6,7 @@
         <field name="model">hr.leave.report.used</field>
         <field name="arch" type="xml">
             <tree create="0" edit="0" delete="0">
-                <field name="name"/>
+                <field name="name" width="700px"/>
                 <field name="annual_leave"/>
                 <field name="replacement_day_off"/>
                 <field name="sick"/>

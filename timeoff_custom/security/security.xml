@@ -5,6 +5,22 @@
         <field name="name">Time Off / Eligibility</field>
     </record>
 
+    <record id="employee" model="res.groups">
+        <field name="name">Employee / Position / Employee</field>
+    </record>
+
+    <record id="hr" model="res.groups">
+        <field name="name">Employee / Position / HR</field>
+    </record>
+
+    <record id="ceo" model="res.groups">
+        <field name="name">Employee / Position / CEO</field>
+    </record>
+
+    <record id="manager" model="res.groups">
+        <field name="name">Employee / Position / Manager</field>
+    </record>
+
     <record id="resource_all_can_see" model="ir.rule">
         <field name="name">Time Off Resource Which All Can See</field>
         <field name="model_id" ref="model_hr_leave_type"/>

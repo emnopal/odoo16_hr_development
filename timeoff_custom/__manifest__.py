@@ -14,6 +14,7 @@
         "security/ir.model.access.csv",
         'security/security.xml',
         'data/mail_template.xml',
+        'report/hr_leave_report_inherit.xml',
         'report/hr_leave_report_balance_view.xml',
         'report/hr_leave_report_used_view.xml',
         'report/hr_leave_report_employee_view.xml',

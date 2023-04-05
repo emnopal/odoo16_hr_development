@@ -15,6 +15,12 @@
             <xpath expr="//button[@name='action_refuse']" position="attributes">
                 <attribute name="invisible">1</attribute>
             </xpath>
+            <xpath expr="//field[@name='holiday_type']" position="attributes">
+                <attribute name="optional">hide</attribute>
+            </xpath>
+            <xpath expr="//field[@name='state']" position="after">
+                <field name="create_date"></field>
+            </xpath>
         </field>
     </record>
 
@@ -127,26 +133,28 @@
                 <field name="current_user" invisible="1" readonly="1"></field>
                 <field name="is_hr" invisible="1" readonly="1"></field>
                 <field name="is_manager" invisible="1" readonly="1"></field>
-            </xpath>
-            <xpath expr="//button[@name='action_approve']" position="attributes">
-                <attribute name="string">Approve</attribute>
-                <attribute name="attrs">{'invisible': ['|', '|', '|', ('state', '!=', 'confirm'), ('current_user', '=', True), ('active', '=', False), ('can_approve', '=', False)]}</attribute>
+                <field name="is_superuser" invisible="1" readonly="1"></field>
             </xpath>
             <xpath expr="//button[@name='action_confirm']" position="attributes">
                 <attribute name="string">Submit</attribute>
             </xpath>
+            <xpath expr="//button[@name='action_approve']" position="attributes">
+                <attribute name="string">Approve</attribute>
+                <attribute name="attrs">{'invisible': ['|', '|', '|', '|', '|', ('is_superuser', '!=', True), ('state', '!=', 'confirm'), ('current_user', '=', True), ('active', '=', False), ('can_approve', '=', False), ('is_manager', '=', False)]}</attribute>
+            </xpath>
             <xpath expr="//button[@name='action_validate']" position="attributes">
                 <attribute name="string">Confirm</attribute>
-                <attribute name="attrs">{'invisible': ['|', ('state', '!=', 'validate1'), ('current_user', '=', True)]}</attribute>
+                <attribute name="attrs">{'invisible': ['|', '|', '|', ('is_superuser', '!=', True), ('state', '!=', 'validate1'), ('current_user', '=', True), ('is_hr', '=', False)]}</attribute>
+                <attribute name="groups">timeoff_custom.hr</attribute>
             </xpath>
             <xpath expr="//button[@name='action_refuse']" position="replace">
-                <button string="Refuse" name="%(hr_leave_refuse_leave_wizard_action)d" type="action" attrs="{'invisible': ['|', '|', '|', ('state', 'not in', ('confirm')), ('current_user', '=', True), ('active', '=', False), ('can_approve', '=', False)]}"/>
+                <button string="Refuse" name="%(hr_leave_refuse_leave_wizard_action)d" type="action" attrs="{'invisible': ['|', '|', '|', '|', ('is_superuser', '!=', True), ('state', 'not in', ('confirm')), ('current_user', '=', True), ('active', '=', False), ('can_approve', '=', False)]}"/>
             </xpath>
             <xpath expr="//button[@name='action_cancel']" position="replace">
-                <button string="Cancel" name="action_cancel" type="object" attrs="{'invisible': ['|', '|', '|', ('state', 'not in', ('confirm', 'validate', 'validate1')), ('can_approve', '=', False), ('current_user', '=', True), ('active', '=', False)]}"/>
+                <button string="Cancel" name="action_cancel" type="object" attrs="{'invisible': ['|', '|', '|', '|', ('is_superuser', '!=', True), ('state', 'not in', ('confirm', 'validate', 'validate1')), ('can_approve', '=', False), ('current_user', '=', True), ('active', '=', False)]}"/>
             </xpath>
             <xpath expr="//button[@name='action_draft']" position="attributes">
-                <attribute name="attrs">{'invisible': [('state', 'not in', ['cancel', 'confirm'])]}</attribute>
+                <attribute name="attrs">{'invisible': ['|', ('is_superuser', '!=', True), ('current_user', '!=', True)]}</attribute>
             </xpath>
             <xpath expr="//field[@name='message_follower_ids']" position="replace"/>
             <xpath expr="//field[@name='activity_ids']" position="replace"/>
@@ -166,7 +174,7 @@
     </record>
 
     <record model="ir.ui.menu" id="hr_holidays.hr_holidays_accrual_menu_configuration">
-        <field name="groups_id" eval="[(6,0,[ref('hr_holidays.group_hr_holidays_manager')])]"/>
+        <field name="groups_id" eval="[(6,0,[ref('base.group_system')])]"/>
     </record>
 
     <record model="ir.ui.menu" id="hr_holidays.hr_holidays_public_time_off_menu_configuration">
@@ -174,15 +182,16 @@
     </record>
 
     <record model="ir.ui.menu" id="hr_holidays.hr_holidays_stress_day_menu_configuration">
-        <field name="groups_id" eval="[(6,0,[ref('hr_holidays.group_hr_holidays_manager')])]"/>
+        <field name="groups_id" eval="[(6,0,[ref('base.group_system')])]"/>
     </record>
 
     <record model="ir.ui.menu" id="hr_holidays.menu_hr_available_holidays_report_tree">
         <field name="name">Graph</field>
+        <field name="groups_id" eval="[(6,0,[ref('base.group_system')])]"/>
     </record>
 
     <record model="ir.ui.menu" id="hr_holidays.menu_hr_holidays_summary_all">
-        <field name="name">Summary</field>
+        <field name="name">Report Per Leave</field>
     </record>
 
 </odoo>

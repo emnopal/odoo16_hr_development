@@ -106,7 +106,7 @@
         <field name="model_id" ref="timeoff_custom.model_hr_leave_report_allocation"/>
         <field name="binding_model_id" ref="hr.model_hr_employee"/>
         <field name="state">code</field>
-        <field name="groups_id" eval="[(4, ref('hr_holidays.group_hr_holidays_user'))]"/>
+        <field name="groups_id" eval="[(4, ref('base.group_system'))]"/>
         <field name="code">
         action = model.action_time_off_analysis()
         </field>
@@ -117,6 +117,7 @@
         name="Allocation Report"
         parent="hr_holidays.menu_hr_holidays_report"
         action="act_hr_employee_holiday_request_allocation"
+        groups="base.group_system"
         sequence="5"/>
 
 </odoo>

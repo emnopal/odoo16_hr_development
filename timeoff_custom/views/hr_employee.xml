@@ -8,6 +8,7 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='employee_type']" position="after">
                 <field name="employee_eligibility" force_save="1"/>
+                <field name="position" force_save="1"/>
             </xpath>
         </field>
     </record>

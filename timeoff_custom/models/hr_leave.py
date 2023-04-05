@@ -6,6 +6,7 @@ from datetime import datetime
 
 class HrLeave(models.Model):
     _inherit = "hr.leave"
+    _order = 'create_date desc'
 
     holiday_status_name = fields.Char(related='holiday_status_id.name')
     must_upload_attachment = fields.Boolean(related='holiday_status_id.must_upload_attachment')
@@ -14,7 +15,12 @@ class HrLeave(models.Model):
     current_user = fields.Boolean(string="Is Current User?", compute='_get_current_user')
     is_hr = fields.Boolean(related='employee_id.is_hr')
     is_manager = fields.Boolean(related='employee_id.is_manager')
+    is_superuser = fields.Boolean(compute='_get_superuser')
     state = fields.Selection(selection_add=[('cancel', 'Cancelled')])
+
+    def _get_superuser(self):
+        for rec in self:
+            rec.is_superuser = (True if rec.env.user.has_group('base.group_system') else False)
 
     @api.depends('user_id')
     def _get_current_user(self):
@@ -142,6 +148,11 @@ class HrLeave(models.Model):
         self.activity_update()
         return True
 
+    # Start
+    # depreciation draft, before removing in incoming version
+    # because it not used anymore
+    # why?
+    # bug. the logic for selecting timeoff will be broken
     @api.constrains('state', 'number_of_days', 'holiday_status_id')
     def _check_holidays(self):
         can_select_past_day = self.can_select_past
@@ -166,7 +177,7 @@ class HrLeave(models.Model):
                         float_compare(leave_days['remaining_leaves'], 0, precision_digits=2) == -1,
                         float_compare(leave_days['virtual_remaining_leaves'], 0, precision_digits=2) == -1
                     ]),
-                    not can_select_past_day
+                    # not can_select_past_day
                 ])
 
                 if leave_days_compare:
@@ -189,3 +200,4 @@ class HrLeave(models.Model):
                                             'Please also check the time off waiting for validation.')
                                         + _('\nThe employees that lack allocation days are:\n%s',
                                             (', '.join(unallocated_employees))))
+    # End

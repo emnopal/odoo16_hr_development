@@ -10,7 +10,9 @@
             <xpath expr="//field[@name='activity_ids']" position="replace"/>
             <xpath expr="//field[@name='holiday_status_id']" position="attributes">
                 <attribute name="attrs">{'readonly': [('state', 'not in', ('draft'))]}</attribute>
-                <attribute name="readonly">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='holiday_status_id']" position="after">
+                <field name="is_superuser" invisible="1" readonly="1"></field>
             </xpath>
             <xpath expr="//label[@for='number_of_days_display']" position="attributes">
                 <attribute name="attrs">{
@@ -41,9 +43,9 @@
             <xpath expr="//button[@name='action_confirm']" position="after">
                 <button string="Validate" name="action_validate" states="confirm" type="object" class="oe_highlight"/>
                 <button string="Refuse" name="action_refuse" type="object"
-                    attrs="{'invisible': ['|', ('can_approve', '=', False), ('state', 'not in', ('confirm','validate'))]}"/>
+                    attrs="{'invisible': ['|', '|', ('is_superuser', '!=', True), ('can_approve', '=', False), ('state', 'not in', ('confirm','validate'))]}"/>
                 <button string="Mark as Draft" name="action_draft" type="object"
-                        attrs="{'invisible': [('state', 'not in', ['confirm', 'refuse'])]}"/>
+                        attrs="{'invisible': ['|', ('is_superuser', '!=', True), ('state', 'not in', ['confirm', 'refuse'])]}"/>
             </xpath>
             <xpath expr="//div[@id='title']" position="replace">
                 <div class="oe_title">
@@ -129,16 +131,22 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='allocation_type']" position="after">
                 <field name="current_user" invisible="1" readonly="1"></field>
+                <field name="is_hr" invisible="1" readonly="1"></field>
+                <field name="is_manager" invisible="1" readonly="1"></field>
+                <field name="is_superuser" invisible="1" readonly="1"></field>
             </xpath>
-            <xpath expr="//button[@name='action_validate']" position="attributes">
-                <attribute name="attrs">{'invisible': ['|', '|', ('current_user', '=', True), ('state', 'not in', ('confirm','validate'))]}</attribute>
+            <xpath expr="//button[@name='action_validate']" position="replace">
+                <button string="Confirm" name="action_validate" states="validate1" type="object" groups="timeoff_custom.hr" class="oe_highlight" attrs="{'invisible': ['|', '|', '|', ('is_superuser', '!=', True), ('state', '!=', 'validate1'), ('current_user', '=', True), ('is_hr', '=', False)]}"/>
+            </xpath>
+            <xpath expr="//button[@name='action_validate']" position="after">
+                <button string="Approve" name="action_approve" type="object" class="oe_highlight" attrs="{'invisible': ['|', '|', '|', '|', ('is_superuser', '!=', True), ('state', '!=', 'confirm'), ('current_user', '=', True), ('can_approve', '=', False), ('is_manager', '=', False)]}"/>
             </xpath>
             <xpath expr="//button[@name='action_refuse']" position="replace">
                 <button string="Refuse" name="%(hr_leave_refuse_allocation_wizard_action)d" type="action" attrs="{'invisible': ['|', '|', ('can_approve', '=', False), ('state', 'not in', ('confirm')), ('current_user', '=', True)]}"/>
-                <button string="Cancel" name="action_cancel" type="object" attrs="{'invisible': ['|', '|', ('state', 'not in', ('confirm', 'validate')), ('can_approve', '=', False), ('current_user', '=', True)]}"/>
+                <button string="Cancel" name="action_cancel" type="object" attrs="{'invisible': ['|', '|', '|', ('is_superuser', '!=', True), ('state', 'not in', ('confirm', 'validate')), ('can_approve', '=', False), ('current_user', '=', True)]}"/>
             </xpath>
             <xpath expr="//button[@name='action_draft']" position="attributes">
-                <attribute name="attrs">{'invisible': [('state', 'not in', ['cancel', 'confirm'])]}</attribute>
+                <attribute name="attrs">{'invisible': ['|', ('is_superuser', '!=', True), ('state', 'not in', ['cancel', 'confirm'])]}</attribute>
             </xpath>
         </field>
     </record>
@@ -153,6 +161,18 @@
             </xpath>
             <xpath expr="//button[@name='action_refuse']" position="attributes">
                 <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//field[@name='date_from']" position="attributes">
+                <attribute name="optional">show</attribute>
+            </xpath>
+            <xpath expr="//field[@name='date_to']" position="attributes">
+                <attribute name="optional">show</attribute>
+            </xpath>
+            <xpath expr="//field[@name='allocation_type']" position="attributes">
+                <attribute name="optional">hide</attribute>
+            </xpath>
+            <xpath expr="//field[@name='state']" position="after">
+                <field name="create_date"></field>
             </xpath>
         </field>
     </record>

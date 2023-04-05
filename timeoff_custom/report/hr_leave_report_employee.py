@@ -108,7 +108,7 @@ class LeaveReportEmployee(models.Model):
             ])
 
         return {
-            'name': _('Employee Report'),
+            'name': _('Report Per Employee'),
             'type': 'ir.actions.act_window',
             'res_model': 'hr.leave.report.employee',
             'view_mode': 'tree,pivot,form',
